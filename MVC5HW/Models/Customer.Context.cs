@@ -13,10 +13,10 @@ namespace MVC5HW.Models
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
     
-    public partial class 客戶資料Entities : DbContext
+    public partial class 客戶資料Entities1 : DbContext
     {
-        public 客戶資料Entities()
-            : base("name=客戶資料Entities")
+        public 客戶資料Entities1()
+            : base("name=客戶資料Entities1")
         {
         }
     
@@ -28,6 +28,5 @@ namespace MVC5HW.Models
         public virtual DbSet<客戶資料> 客戶資料 { get; set; }
         public virtual DbSet<客戶銀行資訊> 客戶銀行資訊 { get; set; }
         public virtual DbSet<客戶聯絡人> 客戶聯絡人 { get; set; }
-        public virtual DbSet<V_CUSTOMER> V_CUSTOMER { get; set; }
     }
 }
