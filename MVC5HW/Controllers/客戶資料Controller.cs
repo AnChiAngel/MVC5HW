@@ -14,10 +14,20 @@ namespace MVC5HW.Controllers
     {
         private 客戶資料Entities1 db = new 客戶資料Entities1();
 
-        // GET: 客戶資料
-        public ActionResult Index()
+        public ActionResult 客戶關聯資料表()
         {
-            return View(db.客戶資料.ToList());
+            return View(db.V_客戶關聯資料統計表.ToList());
+        }
+
+        // GET: 客戶資料
+        public ActionResult Index(string keyword)
+        {
+            //return View(db.客戶資料.Where(p => false == p.是否已刪除).ToList());
+            var data = db.客戶資料.Where(p => false == p.是否已刪除).AsQueryable();
+            if (!String.IsNullOrEmpty(keyword)) {
+                data = data.Where(p => p.客戶名稱.Contains(keyword));
+            }
+            return View(data.ToList());
         }
 
         // GET: 客戶資料/Details/5
@@ -110,7 +120,8 @@ namespace MVC5HW.Controllers
         public ActionResult DeleteConfirmed(int id)
         {
             客戶資料 客戶資料 = db.客戶資料.Find(id);
-            db.客戶資料.Remove(客戶資料);
+            //db.客戶資料.Remove(客戶資料);
+            客戶資料.是否已刪除 = true;
             db.SaveChanges();
             return RedirectToAction("Index");
         }
