@@ -20,7 +20,7 @@ namespace MVC5HW.Controllers
         }
 
         // GET: 客戶資料
-        public ActionResult Index(string keyword)
+        /*public ActionResult Index(string keyword)
         {
             //return View(db.客戶資料.Where(p => false == p.是否已刪除).ToList());
             var data = db.客戶資料.Where(p => false == p.是否已刪除).AsQueryable();
@@ -28,6 +28,67 @@ namespace MVC5HW.Controllers
                 data = data.Where(p => p.客戶名稱.Contains(keyword));
             }
             return View(data.ToList());
+        }*/
+        public ActionResult Index(string sortOrder, string searchString)
+        {
+            ViewBag.CNameSortParm = String.IsNullOrEmpty(sortOrder) ? "CName_Desc" : "";
+            ViewBag.NumSortParm = sortOrder == "Num" ? "Num_Desc" : "Num";
+            ViewBag.TelSortParm = sortOrder == "Tel" ? "Tel_Desc" : "Tel";
+            ViewBag.FaxSortParm = sortOrder == "Fax" ? "Fax_Desc" : "Fax";
+            ViewBag.AddrSortParm = sortOrder == "Addr" ? "Addr_Desc" : "Addr";
+            ViewBag.EmailSortParm = sortOrder == "Email" ? "Email_Desc" : "Email";
+            ViewBag.TypeSortParm = sortOrder == "Type" ? "Type_Desc" : "Type";
+            var customers = from c in db.客戶資料.Where(p => false == p.是否已刪除).AsQueryable() select c;
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                customers = customers.Where(s => s.客戶名稱.Contains(searchString) || s.地址.Contains(searchString));
+            }
+            switch (sortOrder)
+            {
+                case "CName_Desc":
+                    customers = customers.OrderByDescending(s => s.客戶名稱);
+                    break;
+                case "Num":
+                    customers = customers.OrderBy(s => s.統一編號);
+                    break;
+                case "Num_Desc":
+                    customers = customers.OrderByDescending(s => s.統一編號);
+                    break;
+                case "Tel":
+                    customers = customers.OrderBy(s => s.電話);
+                    break;
+                case "Tel_Desc":
+                    customers = customers.OrderByDescending(s => s.電話);
+                    break;
+                case "Fax":
+                    customers = customers.OrderBy(s => s.傳真);
+                    break;
+                case "Fax_Desc":
+                    customers = customers.OrderByDescending(s => s.傳真);
+                    break;
+                case "Email":
+                    customers = customers.OrderBy(s => s.地址);
+                    break;
+                case "Email_Desc":
+                    customers = customers.OrderByDescending(s => s.地址);
+                    break;
+                case "Addr":
+                    customers = customers.OrderBy(s => s.Email);
+                    break;
+                case "Addr_Desc":
+                    customers = customers.OrderByDescending(s => s.Email);
+                    break;
+                case "Type":
+                    customers = customers.OrderBy(s => s.客戶分類);
+                    break;
+                case "Type_Desc":
+                    customers = customers.OrderByDescending(s => s.客戶分類);
+                    break;
+                default:
+                    customers = customers.OrderBy(s => s.客戶名稱);
+                    break;
+            }
+            return View(customers.ToList());
         }
 
         // GET: 客戶資料/Details/5

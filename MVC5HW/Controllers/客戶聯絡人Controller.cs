@@ -15,10 +15,53 @@ namespace MVC5HW.Controllers
         private 客戶資料Entities1 db = new 客戶資料Entities1();
 
         // GET: 客戶聯絡人
-        public ActionResult Index()
+        /*public ActionResult Index()
         {
             var 客戶聯絡人 = db.客戶聯絡人.Include(客 => 客.客戶資料);
             return View(客戶聯絡人.Where(p => false == p.是否已刪除).ToList());
+        }*/
+        public ActionResult Index(string sortOrder)
+        {
+            ViewBag.TitleSortParm = String.IsNullOrEmpty(sortOrder) ? "Title_Desc" : "";
+            ViewBag.NameSortParm = sortOrder == "Name" ? "Name_Desc" : "Name";
+            ViewBag.EmailSortParm = sortOrder == "Email" ? "Email_Desc" : "Email";
+            ViewBag.PhoneSortParm = sortOrder == "Phone" ? "Phone_Desc" : "Phone";
+            ViewBag.TelSortParm = sortOrder == "Tel" ? "Tel_Desc" : "Tel";
+            var persons = from cp in db.客戶聯絡人 select cp;
+            switch (sortOrder)
+            {
+                case "Title_Desc":
+                    persons = persons.OrderByDescending(s => s.職稱);
+                    break;
+                case "Name":
+                    persons = persons.OrderBy(s => s.姓名);
+                    break;
+                case "Name_Desc":
+                    persons = persons.OrderByDescending(s => s.姓名);
+                    break;
+                case "Email":
+                    persons = persons.OrderBy(s => s.Email);
+                    break;
+                case "Email_Desc":
+                    persons = persons.OrderByDescending(s => s.Email);
+                    break;
+                case "Phone":
+                    persons = persons.OrderBy(s => s.手機);
+                    break;
+                case "Phone_Desc":
+                    persons = persons.OrderByDescending(s => s.手機);
+                    break;
+                case "Tel":
+                    persons = persons.OrderBy(s => s.電話);
+                    break;
+                case "Tel_Desc":
+                    persons = persons.OrderByDescending(s => s.電話);
+                    break;
+                default:
+                    persons = persons.OrderBy(s => s.職稱);
+                    break;
+            }
+            return View(persons.Where(p => false == p.是否已刪除).ToList());
         }
 
         // GET: 客戶聯絡人/Details/5
