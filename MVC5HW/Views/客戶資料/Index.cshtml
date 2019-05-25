@@ -10,10 +10,11 @@
     @Html.ActionLink("Create New", "Create")
 </p>
 
-@using (Html.BeginForm())
+@using (Html.BeginForm("Index", "客戶資料", FormMethod.Get))
 {
     <p>
-        搜尋[客戶名稱/地址]：@Html.TextBox("SearchString")
+        客戶分類：@Html.DropDownList("客戶分類ItemList")
+        客戶名稱：@Html.TextBox("SearchString")
         <input type="submit" value="Search" />
     </p>
 }

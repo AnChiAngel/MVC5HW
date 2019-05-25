@@ -13,6 +13,12 @@ namespace MVC5HW.Controllers
     public class 客戶資料Controller : Controller
     {
         private 客戶資料Entities1 db = new 客戶資料Entities1();
+        客戶資料Repository repo;
+
+        public 客戶資料Controller()
+        {
+            repo = RepositoryHelper.Get客戶資料Repository();
+        }
 
         public ActionResult 客戶關聯資料表()
         {
@@ -29,66 +35,19 @@ namespace MVC5HW.Controllers
             }
             return View(data.ToList());
         }*/
-        public ActionResult Index(string sortOrder, string searchString)
+        public ActionResult Index(string sortOrder, string searchString, string 客戶分類ItemList)
         {
-            ViewBag.CNameSortParm = String.IsNullOrEmpty(sortOrder) ? "CName_Desc" : "";
-            ViewBag.NumSortParm = sortOrder == "Num" ? "Num_Desc" : "Num";
-            ViewBag.TelSortParm = sortOrder == "Tel" ? "Tel_Desc" : "Tel";
-            ViewBag.FaxSortParm = sortOrder == "Fax" ? "Fax_Desc" : "Fax";
-            ViewBag.AddrSortParm = sortOrder == "Addr" ? "Addr_Desc" : "Addr";
-            ViewBag.EmailSortParm = sortOrder == "Email" ? "Email_Desc" : "Email";
-            ViewBag.TypeSortParm = sortOrder == "Type" ? "Type_Desc" : "Type";
-            var customers = from c in db.客戶資料.Where(p => false == p.是否已刪除).AsQueryable() select c;
-            if (!String.IsNullOrEmpty(searchString))
-            {
-                customers = customers.Where(s => s.客戶名稱.Contains(searchString) || s.地址.Contains(searchString));
-            }
-            switch (sortOrder)
-            {
-                case "CName_Desc":
-                    customers = customers.OrderByDescending(s => s.客戶名稱);
-                    break;
-                case "Num":
-                    customers = customers.OrderBy(s => s.統一編號);
-                    break;
-                case "Num_Desc":
-                    customers = customers.OrderByDescending(s => s.統一編號);
-                    break;
-                case "Tel":
-                    customers = customers.OrderBy(s => s.電話);
-                    break;
-                case "Tel_Desc":
-                    customers = customers.OrderByDescending(s => s.電話);
-                    break;
-                case "Fax":
-                    customers = customers.OrderBy(s => s.傳真);
-                    break;
-                case "Fax_Desc":
-                    customers = customers.OrderByDescending(s => s.傳真);
-                    break;
-                case "Email":
-                    customers = customers.OrderBy(s => s.地址);
-                    break;
-                case "Email_Desc":
-                    customers = customers.OrderByDescending(s => s.地址);
-                    break;
-                case "Addr":
-                    customers = customers.OrderBy(s => s.Email);
-                    break;
-                case "Addr_Desc":
-                    customers = customers.OrderByDescending(s => s.Email);
-                    break;
-                case "Type":
-                    customers = customers.OrderBy(s => s.客戶分類);
-                    break;
-                case "Type_Desc":
-                    customers = customers.OrderByDescending(s => s.客戶分類);
-                    break;
-                default:
-                    customers = customers.OrderBy(s => s.客戶名稱);
-                    break;
-            }
-            return View(customers.ToList());
+            ViewBag.客戶分類ItemList = repo.客戶分類ItemList("");
+
+            ViewBag.CNameSortParm = String.IsNullOrEmpty(sortOrder) ? "客戶名稱D" : "";
+            ViewBag.NumSortParm = sortOrder == "統一編號" ? "統一編號D" : "統一編號";
+            ViewBag.TelSortParm = sortOrder == "電話" ? "電話D" : "電話";
+            ViewBag.FaxSortParm = sortOrder == "傳真" ? "傳真D" : "傳真";
+            ViewBag.AddrSortParm = sortOrder == "地址" ? "地址D" : "地址";
+            ViewBag.EmailSortParm = sortOrder == "Email" ? "EmailD" : "Email";
+            ViewBag.TypeSortParm = sortOrder == "客戶分類" ? "客戶分類D" : "客戶分類";
+            var 客where = repo.searchALL(sortOrder, searchString, 客戶分類ItemList);
+            return View(客where.ToList());
         }
 
         // GET: 客戶資料/Details/5
@@ -98,7 +57,8 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶資料 客戶資料 = db.客戶資料.Find(id);
+            //客戶資料 客戶資料 = db.客戶資料.Find(id);
+            客戶資料 客戶資料 = repo.Find(id.Value);
             if (客戶資料 == null)
             {
                 return HttpNotFound();
@@ -109,6 +69,7 @@ namespace MVC5HW.Controllers
         // GET: 客戶資料/Create
         public ActionResult Create()
         {
+            ViewBag.客戶分類 = repo.客戶分類ItemList("");
             return View();
         }
 
@@ -117,15 +78,17 @@ namespace MVC5HW.Controllers
         // 詳細資訊，請參閱 https://go.microsoft.com/fwlink/?LinkId=317598。
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Id,客戶名稱,統一編號,電話,傳真,地址,Email")] 客戶資料 客戶資料)
+        public ActionResult Create([Bind(Include = "Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] 客戶資料 客戶資料)
         {
             if (ModelState.IsValid)
             {
-                db.客戶資料.Add(客戶資料);
-                db.SaveChanges();
+                //db.客戶資料.Add(客戶資料);
+                //db.SaveChanges();
+                repo.Add(客戶資料);
+                repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
-
+            ViewBag.客戶分類 = repo.客戶分類ItemList("");
             return View(客戶資料);
         }
 
@@ -141,6 +104,8 @@ namespace MVC5HW.Controllers
             {
                 return HttpNotFound();
             }
+            //ViewBag.客戶分類 = new SelectList(repo.客戶分類ItemList(), "客戶分類", 客戶資料.客戶分類);
+            ViewBag.客戶分類 = repo.客戶分類ItemList(客戶資料.客戶分類);
             return View(客戶資料);
         }
 
@@ -149,14 +114,18 @@ namespace MVC5HW.Controllers
         // 詳細資訊，請參閱 https://go.microsoft.com/fwlink/?LinkId=317598。
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "Id,客戶名稱,統一編號,電話,傳真,地址,Email")] 客戶資料 客戶資料)
+        public ActionResult Edit([Bind(Include = "Id,客戶名稱,統一編號,電話,傳真,地址,Email,客戶分類")] 客戶資料 客戶資料)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(客戶資料).State = EntityState.Modified;
-                db.SaveChanges();
+                //db.Entry(客戶資料).State = EntityState.Modified;
+                //db.SaveChanges();
+                repo.UnitOfWork.Context.Entry(客戶資料).State = EntityState.Modified;
+                repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
+            //ViewBag.客戶分類 = new SelectList(repo.客戶分類ItemList(), 客戶資料.客戶分類);
+            ViewBag.客戶分類 = repo.客戶分類ItemList(客戶資料.客戶分類);
             return View(客戶資料);
         }
 
@@ -167,7 +136,8 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶資料 客戶資料 = db.客戶資料.Find(id);
+            //客戶資料 客戶資料 = db.客戶資料.Find(id);
+            客戶資料 客戶資料 = repo.Find(id.Value);
             if (客戶資料 == null)
             {
                 return HttpNotFound();
@@ -180,10 +150,13 @@ namespace MVC5HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            客戶資料 客戶資料 = db.客戶資料.Find(id);
-            //db.客戶資料.Remove(客戶資料);
-            客戶資料.是否已刪除 = true;
-            db.SaveChanges();
+            //客戶資料 客戶資料 = db.客戶資料.Find(id);
+            ////db.客戶資料.Remove(客戶資料);
+            //客戶資料.是否已刪除 = true;
+            //db.SaveChanges();
+            客戶資料 客戶資料 = repo.Find(id);
+            repo.Delete(客戶資料);
+            repo.UnitOfWork.Commit();
             return RedirectToAction("Index");
         }
 
@@ -191,7 +164,8 @@ namespace MVC5HW.Controllers
         {
             if (disposing)
             {
-                db.Dispose();
+                //db.Dispose();
+                repo.UnitOfWork.Context.Dispose();
             }
             base.Dispose(disposing);
         }

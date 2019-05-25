@@ -12,13 +12,23 @@ namespace MVC5HW.Controllers
 {
     public class 客戶銀行資訊Controller : Controller
     {
-        private 客戶資料Entities1 db = new 客戶資料Entities1();
+        //private 客戶資料Entities1 db = new 客戶資料Entities1();
+        客戶銀行資訊Repository repo;
+        客戶資料Repository repoCust;
+
+        public 客戶銀行資訊Controller()
+        {
+            repo = RepositoryHelper.Get客戶銀行資訊Repository();
+            repoCust = RepositoryHelper.Get客戶資料Repository(repo.UnitOfWork);
+        }
 
         // GET: 客戶銀行資訊
-        public ActionResult Index()
+        public ActionResult Index(string keyword)
         {
-            var 客戶銀行資訊 = db.客戶銀行資訊.Include(客 => 客.客戶資料);
-            return View(客戶銀行資訊.Where(p => false == p.是否已刪除).ToList());
+            //var 客戶銀行資訊 = db.客戶銀行資訊.Include(客 => 客.客戶資料);
+            //return View(客戶銀行資訊.Where(p => false == p.是否已刪除).ToList());
+            var data = repo.GetList(keyword);
+            return View(data.ToList());
         }
 
         // GET: 客戶銀行資訊/Details/5
@@ -28,7 +38,8 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            //客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            客戶銀行資訊 客戶銀行資訊 = repo.Find(id.Value);
             if (客戶銀行資訊 == null)
             {
                 return HttpNotFound();
@@ -39,7 +50,8 @@ namespace MVC5HW.Controllers
         // GET: 客戶銀行資訊/Create
         public ActionResult Create()
         {
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱");
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱");
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱");
             return View();
         }
 
@@ -52,12 +64,14 @@ namespace MVC5HW.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.客戶銀行資訊.Add(客戶銀行資訊);
-                db.SaveChanges();
+                //db.客戶銀行資訊.Add(客戶銀行資訊);
+                //db.SaveChanges();
+                repo.Add(客戶銀行資訊);
+                repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
-
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
             return View(客戶銀行資訊);
         }
 
@@ -68,12 +82,14 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            //客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            客戶銀行資訊 客戶銀行資訊 = repo.Find(id.Value);
             if (客戶銀行資訊 == null)
             {
                 return HttpNotFound();
             }
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
             return View(客戶銀行資訊);
         }
 
@@ -86,11 +102,14 @@ namespace MVC5HW.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Entry(客戶銀行資訊).State = EntityState.Modified;
-                db.SaveChanges();
+                //db.Entry(客戶銀行資訊).State = EntityState.Modified;
+                //db.SaveChanges();
+                repo.UnitOfWork.Context.Entry(客戶銀行資訊).State = EntityState.Modified;
+                repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱", 客戶銀行資訊.客戶Id);
             return View(客戶銀行資訊);
         }
 
@@ -101,7 +120,8 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            //客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            客戶銀行資訊 客戶銀行資訊 = repo.Find(id.Value);
             if (客戶銀行資訊 == null)
             {
                 return HttpNotFound();
@@ -114,10 +134,13 @@ namespace MVC5HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
-            //db.客戶銀行資訊.Remove(客戶銀行資訊);
-            客戶銀行資訊.是否已刪除 = true;
-            db.SaveChanges();
+            //客戶銀行資訊 客戶銀行資訊 = db.客戶銀行資訊.Find(id);
+            ////db.客戶銀行資訊.Remove(客戶銀行資訊);
+            //客戶銀行資訊.是否已刪除 = true;
+            //db.SaveChanges();
+            客戶銀行資訊 客戶銀行資訊 = repo.Find(id);
+            repo.Delete(客戶銀行資訊);
+            repo.UnitOfWork.Commit();
             return RedirectToAction("Index");
         }
 
@@ -125,7 +148,8 @@ namespace MVC5HW.Controllers
         {
             if (disposing)
             {
-                db.Dispose();
+                //db.Dispose();
+                repo.UnitOfWork.Context.Dispose();
             }
             base.Dispose(disposing);
         }

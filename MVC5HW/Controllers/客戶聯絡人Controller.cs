@@ -12,7 +12,15 @@ namespace MVC5HW.Controllers
 {
     public class 客戶聯絡人Controller : Controller
     {
-        private 客戶資料Entities1 db = new 客戶資料Entities1();
+        //private 客戶資料Entities1 db = new 客戶資料Entities1();
+        客戶聯絡人Repository repo;
+        客戶資料Repository repoCust;
+
+        public 客戶聯絡人Controller()
+        {
+            repo = RepositoryHelper.Get客戶聯絡人Repository();
+            repoCust = RepositoryHelper.Get客戶資料Repository(repo.UnitOfWork);
+        }
 
         // GET: 客戶聯絡人
         /*public ActionResult Index()
@@ -20,48 +28,15 @@ namespace MVC5HW.Controllers
             var 客戶聯絡人 = db.客戶聯絡人.Include(客 => 客.客戶資料);
             return View(客戶聯絡人.Where(p => false == p.是否已刪除).ToList());
         }*/
-        public ActionResult Index(string sortOrder)
+        public ActionResult Index(string sortOrder, string searchString)
         {
-            ViewBag.TitleSortParm = String.IsNullOrEmpty(sortOrder) ? "Title_Desc" : "";
-            ViewBag.NameSortParm = sortOrder == "Name" ? "Name_Desc" : "Name";
-            ViewBag.EmailSortParm = sortOrder == "Email" ? "Email_Desc" : "Email";
-            ViewBag.PhoneSortParm = sortOrder == "Phone" ? "Phone_Desc" : "Phone";
-            ViewBag.TelSortParm = sortOrder == "Tel" ? "Tel_Desc" : "Tel";
-            var persons = from cp in db.客戶聯絡人 select cp;
-            switch (sortOrder)
-            {
-                case "Title_Desc":
-                    persons = persons.OrderByDescending(s => s.職稱);
-                    break;
-                case "Name":
-                    persons = persons.OrderBy(s => s.姓名);
-                    break;
-                case "Name_Desc":
-                    persons = persons.OrderByDescending(s => s.姓名);
-                    break;
-                case "Email":
-                    persons = persons.OrderBy(s => s.Email);
-                    break;
-                case "Email_Desc":
-                    persons = persons.OrderByDescending(s => s.Email);
-                    break;
-                case "Phone":
-                    persons = persons.OrderBy(s => s.手機);
-                    break;
-                case "Phone_Desc":
-                    persons = persons.OrderByDescending(s => s.手機);
-                    break;
-                case "Tel":
-                    persons = persons.OrderBy(s => s.電話);
-                    break;
-                case "Tel_Desc":
-                    persons = persons.OrderByDescending(s => s.電話);
-                    break;
-                default:
-                    persons = persons.OrderBy(s => s.職稱);
-                    break;
-            }
-            return View(persons.Where(p => false == p.是否已刪除).ToList());
+            ViewBag.TitleSortParm = String.IsNullOrEmpty(sortOrder) ? "職稱D" : "";
+            ViewBag.NameSortParm = sortOrder == "姓名" ? "姓名D" : "姓名";
+            ViewBag.EmailSortParm = sortOrder == "Email" ? "EmailD" : "Email";
+            ViewBag.PhoneSortParm = sortOrder == "電話" ? "電話D" : "電話";
+            ViewBag.TelSortParm = sortOrder == "手機" ? "手機D" : "手機";
+            var 客where = repo.searchALL(sortOrder, searchString);
+            return View(客where.ToList());
         }
 
         // GET: 客戶聯絡人/Details/5
@@ -71,7 +46,8 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            //客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            客戶聯絡人 客戶聯絡人 = repo.Find(id.Value);
             if (客戶聯絡人 == null)
             {
                 return HttpNotFound();
@@ -82,7 +58,8 @@ namespace MVC5HW.Controllers
         // GET: 客戶聯絡人/Create
         public ActionResult Create()
         {
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱");
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱");
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱");
             return View();
         }
 
@@ -93,14 +70,20 @@ namespace MVC5HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create([Bind(Include = "Id,客戶Id,職稱,姓名,Email,手機,電話")] 客戶聯絡人 客戶聯絡人)
         {
-            if (ModelState.IsValid)
+            var s = repo.EmailFind(客戶聯絡人.Email);
+            if (ModelState.IsValid && (s == null)) //if (ModelState.IsValid)
             {
-                db.客戶聯絡人.Add(客戶聯絡人);
-                db.SaveChanges();
+                //db.客戶聯絡人.Add(客戶聯絡人);
+                //db.SaveChanges();
+                repo.Add(客戶聯絡人);
+                repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
-
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            else if (s != null) {
+                ViewBag.ErrorMessage = "此 Email 已存在！";
+            }
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱", 客戶聯絡人.客戶Id);
             return View(客戶聯絡人);
         }
 
@@ -111,12 +94,14 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            //客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            客戶聯絡人 客戶聯絡人 = repo.Find(id.Value);
             if (客戶聯絡人 == null)
             {
                 return HttpNotFound();
             }
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱", 客戶聯絡人.客戶Id);
             return View(客戶聯絡人);
         }
 
@@ -129,11 +114,14 @@ namespace MVC5HW.Controllers
         {
             if (ModelState.IsValid)
             {
-                db.Entry(客戶聯絡人).State = EntityState.Modified;
-                db.SaveChanges();
+                //db.Entry(客戶聯絡人).State = EntityState.Modified;
+                //db.SaveChanges();
+                repo.UnitOfWork.Context.Entry(客戶聯絡人).State = EntityState.Modified;
+                repo.UnitOfWork.Commit();
                 return RedirectToAction("Index");
             }
-            ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            //ViewBag.客戶Id = new SelectList(db.客戶資料, "Id", "客戶名稱", 客戶聯絡人.客戶Id);
+            ViewBag.客戶Id = new SelectList(repoCust.All(), "Id", "客戶名稱", 客戶聯絡人.客戶Id);
             return View(客戶聯絡人);
         }
 
@@ -144,7 +132,8 @@ namespace MVC5HW.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            //客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            客戶聯絡人 客戶聯絡人 = repo.Find(id.Value);
             if (客戶聯絡人 == null)
             {
                 return HttpNotFound();
@@ -157,10 +146,13 @@ namespace MVC5HW.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
-            //db.客戶聯絡人.Remove(客戶聯絡人);
-            客戶聯絡人.是否已刪除 = true;
-            db.SaveChanges();
+            //客戶聯絡人 客戶聯絡人 = db.客戶聯絡人.Find(id);
+            ////db.客戶聯絡人.Remove(客戶聯絡人);
+            //客戶聯絡人.是否已刪除 = true;
+            //db.SaveChanges();
+            客戶聯絡人 客戶聯絡人 = repo.Find(id);
+            repo.Delete(客戶聯絡人);
+            repo.UnitOfWork.Commit();
             return RedirectToAction("Index");
         }
 
@@ -168,7 +160,8 @@ namespace MVC5HW.Controllers
         {
             if (disposing)
             {
-                db.Dispose();
+                //db.Dispose();
+                repo.UnitOfWork.Context.Dispose();
             }
             base.Dispose(disposing);
         }
